@@ -1,0 +1,167 @@
+{
+  "resume_file": "sample_resume.docx",
+  "extracted_skills": [
+    "AWS",
+    "Agile/Scrum",
+    "Communication",
+    "Data Analysis",
+    "Data Visualization",
+    "Django",
+    "Docker",
+    "Flask",
+    "Git",
+    "Java",
+    "JavaScript",
+    "Linux",
+    "Machine Learning",
+    "MongoDB",
+    "MySQL",
+    "Node.js",
+    "NumPy",
+    "Pandas",
+    "Project Management",
+    "Python",
+    "REST API",
+    "SQL",
+    "Scikit-learn"
+  ],
+  "top_matches": [
+    {
+      "title": "Backend Developer",
+      "similarity": 0.5658,
+      "required_skills": {
+        "Python": 2,
+        "Java": 2,
+        "REST API": 3,
+        "SQL": 3,
+        "Django": 1,
+        "Flask": 1,
+        "MySQL": 2,
+        "MongoDB": 1,
+        "Git": 2,
+        "System Design": 2,
+        "Microservices": 2
+      }
+    },
+    {
+      "title": "Data Scientist",
+      "similarity": 0.4865,
+      "required_skills": {
+        "Python": 3,
+        "Machine Learning": 3,
+        "Statistics": 3,
+        "Pandas": 3,
+        "NumPy": 2,
+        "Scikit-learn": 3,
+        "Data Visualization": 2,
+        "SQL": 2,
+        "Deep Learning": 1
+      }
+    },
+    {
+      "title": "QA / Test Engineer",
+      "similarity": 0.4256,
+      "required_skills": {
+        "Testing/QA": 3,
+        "Python": 1,
+        "Java": 1,
+        "SQL": 1,
+        "Agile/Scrum": 2,
+        "Communication": 2
+      }
+    },
+    {
+      "title": "Full Stack Developer",
+      "similarity": 0.417,
+      "required_skills": {
+        "JavaScript": 3,
+        "React": 3,
+        "Node.js": 3,
+        "HTML/CSS": 3,
+        "REST API": 2,
+        "MongoDB": 2,
+        "SQL": 1,
+        "Git": 2,
+        "TypeScript": 1
+      }
+    },
+    {
+      "title": "Business Analyst",
+      "similarity": 0.3941,
+      "required_skills": {
+        "Data Analysis": 3,
+        "Excel": 3,
+        "SQL": 2,
+        "Communication": 3,
+        "Project Management": 2,
+        "Data Visualization": 2,
+        "Statistics": 1
+      }
+    }
+  ],
+  "top_match_skill_gap": {
+    "job_title": "Backend Developer",
+    "matched_skills": [
+      "REST API",
+      "SQL",
+      "Python",
+      "Java",
+      "MySQL",
+      "Git",
+      "Django",
+      "Flask",
+      "MongoDB"
+    ],
+    "missing_skills": [
+      "System Design",
+      "Microservices"
+    ],
+    "readiness_score": 81.0
+  },
+  "highest_impact_missing_skills": [
+    {
+      "skill": "Statistics",
+      "needed_by_n_matches": 2
+    },
+    {
+      "skill": "System Design",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "Microservices",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "Deep Learning",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "Testing/QA",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "React",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "HTML/CSS",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "TypeScript",
+      "needed_by_n_matches": 1
+    },
+    {
+      "skill": "Excel",
+      "needed_by_n_matches": 1
+    }
+  ],
+  "charts_generated": [
+    "output/01_top_job_matches.png",
+    "output/02_skill_gap_bar.png",
+    "output/03_readiness_donut.png",
+    "output/04_skill_radar.png",
+    "output/05_highest_impact_missing_skills.png",
+    "output/06_pca_job_space.png"
+  ]
+}
