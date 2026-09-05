@@ -1,22 +1,4 @@
-#!/usr/bin/env python3
-"""
-main.py
--------
-Role-Fit — Smart Resume-to-Job Matching & Skill Gap Analysis
-Entry point script. Run this directly from any terminal or IDE.
-
-Interactive usage (recommended for most users):
-    python main.py
-    -> You'll be prompted: "Provide the path of your Resume File : "
-       Type or paste the full path to your .pdf or .docx resume and press Enter.
-
-Command-line usage (for scripting/automation):
-    python main.py path/to/resume.pdf
-    python main.py path/to/resume.docx --k 7 --out results
-
-If a path is passed on the command line, it is used directly and no prompt
-is shown. If no path is passed, the script asks for one interactively.
-"""
+#Based_on_K-NN
 
 import argparse
 import json
@@ -35,20 +17,17 @@ from matcher_core import (
 )
 from visualize import generate_all_visuals
 
-
 def print_header(text: str):
     bar = "=" * 70
     print(f"\n{bar}\n{text}\n{bar}")
 
-
 def print_section(text: str):
     print(f"\n--- {text} " + "-" * max(0, 55 - len(text)))
-
 
 def prompt_for_resume_path() -> str:
     """Interactively ask the user for a resume file path, re-prompting on
     empty input, missing files, or unsupported extensions until a valid
-    path is given (or the user cancels with Ctrl+C)."""
+    path is given."""
     while True:
         path = input("Provide the path of your Resume File : ").strip()
 
@@ -57,7 +36,7 @@ def prompt_for_resume_path() -> str:
             path = path[1:-1]
 
         if not path:
-            print("  Please enter a file path (or press Ctrl+C to quit).\n")
+            print("  Please enter a file path : \n")
             continue
         if not os.path.exists(path):
             print(f"  [!] No file found at: {path}\n      Please check the path and try again.\n")
@@ -66,7 +45,6 @@ def prompt_for_resume_path() -> str:
             print("  [!] Only .pdf and .docx files are supported. Please try again.\n")
             continue
         return path
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -106,7 +84,7 @@ def main():
     print(f"Top-K matches: {args.k}")
     print(f"Output folder: {out_dir}/")
 
-    # --- Stage 1: Parse resume file -----------------------------------
+    # Stage 1: Parsing the resume file
     try:
         print_section("STAGE 1: Parsing resume file")
         raw_text = parse_resume_file(resume_path)
@@ -115,7 +93,7 @@ def main():
         print(f"\n[ERROR] Failed to parse resume: {e}")
         sys.exit(1)
 
-    # --- Stage 2: Extract skills ----------------------------------------
+    # Stage 2: Extracting skills
     print_section("STAGE 2: Extracting skills")
     resume_skills = extract_skills(raw_text)
     if not resume_skills:
@@ -126,21 +104,21 @@ def main():
         print(f"Found {len(resume_skills)} skills:")
         print(textwrap.fill(", ".join(resume_skills), width=70))
 
-    # --- Stage 3 & 4: Vectorize -------------------------------------------
+    # Stage 3 & 4: Vectorization
     print_section("STAGE 3: Vectorizing resume & job dataset")
     resume_vector = vectorize_resume(resume_skills)
     matcher = ResumeJobMatcher()
     print(f"Job dataset loaded: {len(matcher.job_titles)} roles "
           f"across {matcher.job_matrix.shape[1]} tracked skills.")
 
-    # --- Stage 5: K-NN Matching -------------------------------------------
+    # Stage 5: K-NN Matching 
     print_section("STAGE 4: Running K-NN job matching")
     matches = matcher.find_top_matches(resume_vector, k=args.k)
     print(f"Top {len(matches)} matched roles:")
     for i, m in enumerate(matches, 1):
         print(f"  {i}. {m.title:<32} similarity = {m.similarity * 100:5.1f}%")
 
-    # --- Stage 6: Skill Gap Analysis (for top match) -----------------------
+    # Stage 6: Skill Gap Analysis (for top match) 
     print_section("STAGE 5: Skill gap analysis (top match)")
     top_report = skill_gap_report(resume_skills, matches[0])
     print(f"Target role     : {top_report.job_title}")
@@ -156,7 +134,7 @@ def main():
     else:
         print("  No gaps detected across top matches — great fit!")
 
-    # --- Stage 7: Visualizations -------------------------------------------
+    # Stage 7: Visualizations
     print_section("STAGE 6: Generating visualizations")
     chart_paths = generate_all_visuals(
         resume_skills, resume_vector, matches, top_report, matcher, out_dir
@@ -164,7 +142,7 @@ def main():
     for p in chart_paths:
         print(f"  saved -> {p}")
 
-    # --- Save JSON report ---------------------------------------------------
+    # Save your report (JSON) 
     report = {
         "resume_file": resume_path,
         "extracted_skills": resume_skills,
@@ -181,7 +159,6 @@ def main():
     print(f"\nFull JSON report saved -> {json_path}")
 
     print_header("DONE")
-
 
 if __name__ == "__main__":
     main()
