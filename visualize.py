@@ -1,9 +1,5 @@
 """
-visualize.py
-------------
-Part of Role-Fit — Smart Resume-to-Job Matching & Skill Gap Analysis.
-
-Generates all charts for the project as PNG files (no frontend needed).
+Generates all charts for the project as PNG files.
 Every function saves an image into the given output directory and returns
 the file path.
 """
@@ -42,7 +38,7 @@ def _save(fig, out_dir: str, filename: str) -> str:
 
 
 def plot_top_matches_bar(matches: List[JobMatch], out_dir: str) -> str:
-    """Bar chart of cosine similarity scores for top-K matched jobs."""
+    # Bar chart of cosine similarity scores for top-K matched jobs
     titles = [m.title for m in matches][::-1]
     scores = [m.similarity * 100 for m in matches][::-1]
 
@@ -58,7 +54,7 @@ def plot_top_matches_bar(matches: List[JobMatch], out_dir: str) -> str:
 
 
 def plot_skill_gap_bar(report: SkillGapReport, out_dir: str) -> str:
-    """Horizontal bar chart: matched vs missing skills for the top job."""
+    # Horizontal bar chart: matched vs missing skills for the top job
     all_skills = report.matched_skills + report.missing_skills
     colors = [MATCH_COLOR] * len(report.matched_skills) + \
              [GAP_COLOR] * len(report.missing_skills)
@@ -79,7 +75,7 @@ def plot_skill_gap_bar(report: SkillGapReport, out_dir: str) -> str:
 
 
 def plot_readiness_donut(report: SkillGapReport, out_dir: str) -> str:
-    """Donut chart showing readiness % for the top matched job."""
+    # Donut chart showing readiness % for the top matched job
     readiness = report.readiness_score
     remaining = 100 - readiness
 
@@ -134,7 +130,7 @@ def plot_radar_chart(resume_skills: List[str], match: JobMatch, out_dir: str) ->
 
 def plot_common_missing_skills(common_missing: List[Tuple[str, int]], out_dir: str) -> str:
     """Bar chart: skills most frequently missing across ALL top-K matched
-    jobs — i.e. the highest-impact skills to learn next."""
+    jobs i.e. the highest-impact skills to learn next."""
     if not common_missing:
         skills, counts = ["No gaps found!"], [0]
     else:
@@ -153,7 +149,6 @@ def plot_common_missing_skills(common_missing: List[Tuple[str, int]], out_dir: s
 def plot_pca_projection(resume_vector: np.ndarray, matcher, out_dir: str) -> str:
     """2D PCA projection of all job vectors + the resume vector, to visually
     show which 'cluster' of jobs the resume lands closest to.
-
     Vectors are L2-normalized before PCA so the projection reflects skill
     *composition* (which skills, in what proportion) rather than raw skill
     *count* — a resume listing many skills would otherwise appear as a
@@ -194,7 +189,7 @@ def generate_all_visuals(
     matcher,
     out_dir: str,
 ) -> List[str]:
-    """Convenience function: generates every chart and returns list of paths."""
+    # Convenience function: generates every chart and returns list of paths
     common_missing = None
     from matcher_core import most_common_missing_skills
     common_missing = most_common_missing_skills(resume_skills, matches)
