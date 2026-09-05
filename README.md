@@ -2,7 +2,7 @@
 
 # 🎯 Role-Fit
 
-### Smart Resume-to-Job Matching & Skill Gap Analysis
+### Resume-to-Job Matching & Skill Gap Analysis
 
 Upload your resume → get matched to the jobs you're most competitive for → see exactly which skills are holding you back.
 
