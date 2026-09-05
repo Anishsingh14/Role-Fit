@@ -1,6 +1,6 @@
 """
 Generates all charts for the project as PNG files.
-Every function saves an image into the given output directory and returns
+Every function saves the image into the given output directory and returns
 the file path.
 """
 
