@@ -1,8 +1,6 @@
 """
-matcher_core.py
-----------------
-Core ML pipeline for Role-Fit — Smart Resume-to-Job Matching & Skill Gap
-Analysis. Kept separate from main.py so it can be unit-tested / imported
+Core ML pipeline for Role-Fit.
+Kept separate from main.py so it can be unit-tested / imported
 independently.
 
 Pipeline stages:
@@ -28,13 +26,10 @@ from sklearn.neighbors import NearestNeighbors
 
 from job_data import MASTER_SKILLS, SKILL_SYNONYMS, get_job_dataset
 
-
-# ---------------------------------------------------------------------------
 # STAGE 1: FILE PARSING
-# ---------------------------------------------------------------------------
 
 def parse_resume_file(file_path: str) -> str:
-    """Extract raw text from a .pdf or .docx resume file."""
+    # Extract raw text from a .pdf or .docx resume file.
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Resume file not found: {file_path}")
 
@@ -48,7 +43,6 @@ def parse_resume_file(file_path: str) -> str:
         raise ValueError(
             f"Unsupported file type '{ext}'. Only .pdf and .docx are supported."
         )
-
 
 def _parse_pdf(file_path: str) -> str:
     import pdfplumber
@@ -85,10 +79,7 @@ def _parse_docx(file_path: str) -> str:
         raise ValueError("Could not extract any text from the DOCX file.")
     return text
 
-
-# ---------------------------------------------------------------------------
 # STAGE 2: SKILL EXTRACTION
-# ---------------------------------------------------------------------------
 
 def extract_skills(text: str) -> List[str]:
     """
@@ -110,10 +101,7 @@ def extract_skills(text: str) -> List[str]:
                 break
     return sorted(found)
 
-
-# ---------------------------------------------------------------------------
 # STAGE 3 & 4: VECTORIZATION
-# ---------------------------------------------------------------------------
 
 def build_job_vectors() -> Tuple[np.ndarray, List[str], List[dict]]:
     """
@@ -134,9 +122,8 @@ def build_job_vectors() -> Tuple[np.ndarray, List[str], List[dict]]:
     titles = [job["title"] for job in jobs]
     return matrix, titles, jobs
 
-
 def vectorize_resume(resume_skills: List[str]) -> np.ndarray:
-    """Binary (1/0) vector for the resume, aligned to MASTER_SKILLS order."""
+    # Binary (1/0) vector for the resume, aligned to MASTER_SKILLS order.
     skill_index = {skill: i for i, skill in enumerate(MASTER_SKILLS)}
     vector = np.zeros(len(MASTER_SKILLS))
     for skill in resume_skills:
@@ -144,10 +131,7 @@ def vectorize_resume(resume_skills: List[str]) -> np.ndarray:
             vector[skill_index[skill]] = 1.0
     return vector
 
-
-# ---------------------------------------------------------------------------
 # STAGE 5: K-NN MATCHER
-# ---------------------------------------------------------------------------
 
 @dataclass
 class JobMatch:
@@ -192,10 +176,7 @@ class ResumeJobMatcher:
             )
         return matches
 
-
-# ---------------------------------------------------------------------------
 # STAGE 6: SKILL GAP ANALYSIS
-# ---------------------------------------------------------------------------
 
 @dataclass
 class SkillGapReport:
@@ -203,7 +184,6 @@ class SkillGapReport:
     matched_skills: List[str]
     missing_skills: List[str]
     readiness_score: float  # 0-100, weighted by skill importance
-
 
 def skill_gap_report(resume_skills: List[str], job_match: JobMatch) -> SkillGapReport:
     resume_set = set(resume_skills)
