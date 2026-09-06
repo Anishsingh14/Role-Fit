@@ -29,7 +29,7 @@ def prompt_for_resume_path() -> str:
     empty input, missing files, or unsupported extensions until a valid
     path is given."""
     while True:
-        path = input("Provide the path of your Resume File : ").strip()
+        path = input("Provide the path of your Resume File ~ .pdf or .docx : ").strip()
 
         # Allow users to paste quoted paths (common on Windows/macOS)
         if len(path) >= 2 and path[0] == path[-1] and path[0] in ("'", '"'):
