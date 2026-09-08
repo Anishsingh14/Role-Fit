@@ -2,7 +2,7 @@
 
 # 🎯 Role-Fit
 
-### Resume-to-Job Matching & Skill Gap Analysis
+### Smart Resume-to-Job Matching & Skill Gap Analysis
 
 Upload your resume → get matched to the jobs you're most competitive for → see exactly which skills are holding you back.
 
@@ -153,14 +153,26 @@ python main.py sample_resume.docx
 
 ```
 role-fit/
-├── main.py              # Entry point — run this
-├── matcher_core.py       # Parsing, skill extraction, K-NN model, gap analysis
-├── job_data.py            # Skills taxonomy + built-in job dataset (the "database")
-├── visualize.py           # Generates all 6 charts as PNGs
+├── .github/
+│   └── workflows/
+│       └── ci.yml          # GitHub Actions: runs tests + full pipeline on every push
+├── tests/                   # Unit tests (pytest)
+│   ├── conftest.py
+│   ├── test_skill_extraction.py
+│   ├── test_vectorization.py
+│   ├── test_skill_gap.py
+│   └── test_knn_matcher.py
+├── main.py                  # Entry point — run this
+├── matcher_core.py          # Parsing, skill extraction, K-NN model, gap analysis
+├── job_data.py               # Skills taxonomy + built-in job dataset (the "database")
+├── visualize.py               # Generates all 6 charts as PNGs
 ├── requirements.txt
-├── sample_resume.docx     # Example resume for testing
-├── sample_resume.pdf      # Same resume, PDF format
-└── output/                # Auto-created — charts + report.json land here
+├── pytest.ini
+├── README.md
+├── .gitignore
+├── sample_resume.docx        # Example resume for testing
+├── sample_resume.pdf          # Same resume, PDF format
+└── output/                    # Auto-created — charts + report.json land here
 ```
 
 ---
@@ -177,13 +189,13 @@ Instead of relying on an external dataset, `job_data.py` **is** the dataset: 20 
 
 ## 🔬 The ML Approach, In Detail
 
-**Skill extraction** — resume text is matched against `SKILL_SYNONYMS` in `job_data.py`, which maps ~55 canonical skills to their common synonyms (e.g. `"js"`, `"javascript"`, `"es6"` → `JavaScript`). Matching is case-insensitive and word-boundary aware, so `"java"` won't wrongly match inside `"javascript"`.
+**Skill extraction** — resume text is matched against `SKILL_SYNONYMS` in `job_data.py`, which maps ~55 canonical skills to their common synonyms (e.g. `"js"`, `"javascript"`, `"es6"` → `JavaScript`). Matching is case-insensitive and word-boundary aware, so `"java"` won't wrongly match inside `"javascript"`. A second, optional fuzzy-matching pass (via Python's built-in `difflib`, no extra dependency) catches common typos like `"Pyhton"` → `Python`, comparing same-word-count phrases only so short words can't falsely inflate similarity against longer multi-word skills. Disable it with `extract_skills(text, fuzzy=False)` for fully deterministic, exact-match-only behavior.
 
 **Vectorization** — both resumes and jobs become vectors in the same 55-dimensional skill space:
 - Resume vector: binary (1 = has the skill, 0 = doesn't)
 - Job vectors: weighted (1 = nice-to-have, 2 = important, 3 = must-have)
 
-**K-NN matching** — `sklearn.neighbors.NearestNeighbors` finds the closest job vectors to the resume vector using **cosine distance**, which is well-suited to high-dimensional, sparse skill data because it compares the *pattern* of skills rather than raw counts.
+**K-NN matching** — `sklearn.neighbors.NearestNeighbors` finds the closest job vectors to the resume vector using **cosine distance**, which is well-suited to high-dimensional, sparse skill data because it compares the *pattern* of skills rather than raw counts. The job matrix keeps its importance weights (must-have skills count more than nice-to-have ones) rather than being flattened to 1s and 0s, so the weighting system genuinely affects the ranking, not just the readiness score.
 
 **Skill gap analysis** — for the top matched job:
 ```
@@ -195,10 +207,23 @@ Missing skills are ranked by importance weight, so you know what to prioritize f
 
 ---
 
+## 🧪 Running Tests
+
+The pipeline has unit test coverage for skill extraction, vectorization, skill gap math, and K-NN matching (using a mock job dataset):
+
+```bash
+pip install pytest
+pytest -v
+```
+
+Tests also run automatically on every push via GitHub Actions (see `.github/workflows/ci.yml`), which installs dependencies, runs the test suite, executes the full pipeline against `sample_resume.docx`, and checks that all expected output files are generated.
+
+---
+
 ## 🛠️ Extending Role-Fit
 
 - **Real job data**: replace `get_job_dataset()` in `job_data.py` with a loader for a real dataset (e.g. a Kaggle "LinkedIn Job Postings" CSV) — keep the same `{title, required_skills}` structure and the rest of the pipeline needs no changes.
-- **Smarter extraction**: swap the keyword/synonym matcher for a spaCy `PhraseMatcher` or a fine-tuned NER model to handle messier, less-structured resumes.
+- **Smarter extraction**: swap the keyword/synonym + fuzzy matcher for a spaCy `PhraseMatcher`, `rapidfuzz`, or a fine-tuned NER model to handle even messier, less-structured resumes.
 - **Richer vectorization**: try TF-IDF or sentence-transformer embeddings instead of multi-hot encoding, to capture semantic similarity (e.g. "ML" ≈ "Machine Learning") without needing an explicit synonym entry.
 - **Evaluation**: label a small validation set of (resume → correct job category) pairs and measure top-K accuracy; experiment with different K values and distance metrics (cosine vs. Euclidean vs. Jaccard).
 
@@ -207,7 +232,7 @@ Missing skills are ranked by importance weight, so you know what to prioritize f
 ## ⚠️ Known Limitations
 
 - Scanned/image-only PDFs without a text layer can't be parsed (would need OCR, not included).
-- Skill extraction only recognizes skills listed in `SKILL_SYNONYMS` — extend that dictionary in `job_data.py` to cover more skills or domains.
+- Skill extraction (even with fuzzy typo-tolerance) only recognizes skills listed in `SKILL_SYNONYMS` — extend that dictionary in `job_data.py` to cover more skills or domains.
 - The job dataset is illustrative (20 common tech/business roles), not scraped from live postings — see "Extending Role-Fit" above.
 
 ---

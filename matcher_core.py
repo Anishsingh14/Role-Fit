@@ -1,6 +1,8 @@
 """
-Core ML pipeline for Role-Fit.
-Kept separate from main.py so it can be unit-tested / imported
+matcher_core.py
+----------------
+Core ML pipeline for Role-Fit — Smart Resume-to-Job Matching & Skill Gap
+Analysis. Kept separate from main.py so it can be unit-tested / imported
 independently.
 
 Pipeline stages:
@@ -26,10 +28,13 @@ from sklearn.neighbors import NearestNeighbors
 
 from job_data import MASTER_SKILLS, SKILL_SYNONYMS, get_job_dataset
 
+
+# ---------------------------------------------------------------------------
 # STAGE 1: FILE PARSING
+# ---------------------------------------------------------------------------
 
 def parse_resume_file(file_path: str) -> str:
-    # Extract raw text from a .pdf or .docx resume file.
+    """Extract raw text from a .pdf or .docx resume file."""
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Resume file not found: {file_path}")
 
@@ -43,6 +48,7 @@ def parse_resume_file(file_path: str) -> str:
         raise ValueError(
             f"Unsupported file type '{ext}'. Only .pdf and .docx are supported."
         )
+
 
 def _parse_pdf(file_path: str) -> str:
     import pdfplumber
@@ -79,29 +85,88 @@ def _parse_docx(file_path: str) -> str:
         raise ValueError("Could not extract any text from the DOCX file.")
     return text
 
-# STAGE 2: SKILL EXTRACTION
 
-def extract_skills(text: str) -> List[str]:
+# ---------------------------------------------------------------------------
+# STAGE 2: SKILL EXTRACTION
+# ---------------------------------------------------------------------------
+
+def extract_skills(text: str, fuzzy: bool = True, fuzzy_cutoff: float = 0.82) -> List[str]:
     """
     Scan resume text for known skills/synonyms and return the canonical
     skill names found. Case-insensitive, word-boundary aware to avoid
     partial-word false positives (e.g. 'java' inside 'javascript').
+
+    If `fuzzy` is True, also runs a lightweight typo-tolerance pass using
+    the standard library's difflib: single words and word-pairs in the
+    resume that weren't already matched exactly are compared against the
+    known synonym list, and a close match (similarity >= fuzzy_cutoff) is
+    counted too. This catches common typos (e.g. "Pyhton", "Djnago")
+    without needing an extra dependency. Set fuzzy=False for fully
+    deterministic, exact-match-only behavior (e.g. in tests).
     """
+    import difflib
+
     normalized = f" {text.lower()} "
     # Normalize punctuation/whitespace so multi-word phrases match reliably
     normalized = re.sub(r"[\n\r\t]+", " ", normalized)
     normalized = re.sub(r"\s+", " ", normalized)
 
     found = set()
+    matched_synonyms = set()
     for canonical, synonyms in SKILL_SYNONYMS.items():
         for syn in synonyms:
             pattern = r"(?<![a-zA-Z0-9])" + re.escape(syn.strip()) + r"(?![a-zA-Z0-9])"
             if re.search(pattern, normalized):
                 found.add(canonical)
+                matched_synonyms.add(syn.strip())
                 break
+
+    if fuzzy:
+        # Build a flat lookup of every synonym -> canonical skill, skipping
+        # very short synonyms (e.g. "r ") where fuzzy matching is unreliable
+        # and prone to false positives. Synonyms are split by word count so
+        # a single word (e.g. "programming") can never fuzzy-match a
+        # multi-word synonym (e.g. "r programming") purely because it's a
+        # near-total substring of it — that inflates difflib's ratio and
+        # causes false positives. Only same-word-count comparisons are made.
+        synonyms_by_word_count: Dict[int, Dict[str, str]] = {}
+        for canonical, synonyms in SKILL_SYNONYMS.items():
+            for syn in synonyms:
+                syn_clean = syn.strip()
+                if len(syn_clean) < 4:
+                    continue
+                word_count = len(syn_clean.split())
+                synonyms_by_word_count.setdefault(word_count, {})[syn_clean] = canonical
+
+        # Candidate tokens: single words and adjacent word-pairs, so
+        # multi-word skills (e.g. "machine learning") can still fuzzy-match.
+        words = re.findall(r"[a-z0-9\+\#\./-]{4,}", normalized)
+        single_word_candidates = set(words)
+        two_word_candidates = set(f"{a} {b}" for a, b in zip(words, words[1:]))
+
+        for word_count, candidates in (
+            (1, single_word_candidates),
+            (2, two_word_candidates),
+        ):
+            lookup = synonyms_by_word_count.get(word_count, {})
+            if not lookup:
+                continue
+            all_synonyms = list(lookup.keys())
+            for token in candidates:
+                if token in matched_synonyms:
+                    continue
+                close = difflib.get_close_matches(
+                    token, all_synonyms, n=1, cutoff=fuzzy_cutoff
+                )
+                if close:
+                    found.add(lookup[close[0]])
+
     return sorted(found)
 
+
+# ---------------------------------------------------------------------------
 # STAGE 3 & 4: VECTORIZATION
+# ---------------------------------------------------------------------------
 
 def build_job_vectors() -> Tuple[np.ndarray, List[str], List[dict]]:
     """
@@ -122,8 +187,9 @@ def build_job_vectors() -> Tuple[np.ndarray, List[str], List[dict]]:
     titles = [job["title"] for job in jobs]
     return matrix, titles, jobs
 
+
 def vectorize_resume(resume_skills: List[str]) -> np.ndarray:
-    # Binary (1/0) vector for the resume, aligned to MASTER_SKILLS order.
+    """Binary (1/0) vector for the resume, aligned to MASTER_SKILLS order."""
     skill_index = {skill: i for i, skill in enumerate(MASTER_SKILLS)}
     vector = np.zeros(len(MASTER_SKILLS))
     for skill in resume_skills:
@@ -131,7 +197,10 @@ def vectorize_resume(resume_skills: List[str]) -> np.ndarray:
             vector[skill_index[skill]] = 1.0
     return vector
 
+
+# ---------------------------------------------------------------------------
 # STAGE 5: K-NN MATCHER
+# ---------------------------------------------------------------------------
 
 @dataclass
 class JobMatch:
@@ -142,21 +211,25 @@ class JobMatch:
 
 class ResumeJobMatcher:
     """Thin wrapper around sklearn's NearestNeighbors using cosine distance,
-    which behaves well on sparse, high-dimensional skill vectors."""
+    which behaves well on sparse, high-dimensional skill vectors.
+
+    The job matrix keeps its importance weights (1 = nice-to-have,
+    2 = important, 3 = must-have) rather than being binarized, so a
+    "must-have" skill genuinely counts more toward similarity than a
+    "nice-to-have" one — cosine similarity is scale-invariant per vector,
+    so comparing a binary resume vector against a weighted job vector is
+    mathematically sound and still reflects skill importance correctly.
+    """
 
     def __init__(self):
         self.job_matrix, self.job_titles, self.job_dataset = build_job_vectors()
-        # Binarize job matrix for cosine comparison against the resume's
-        # binary vector (magnitude differences from weights are handled
-        # separately in the gap analysis / readiness score).
-        self.job_matrix_binary = (self.job_matrix > 0).astype(float)
 
         self.model = NearestNeighbors(
             n_neighbors=min(5, len(self.job_titles)),
             metric="cosine",
             algorithm="brute",
         )
-        self.model.fit(self.job_matrix_binary)
+        self.model.fit(self.job_matrix)
 
     def find_top_matches(self, resume_vector: np.ndarray, k: int = 5) -> List[JobMatch]:
         k = min(k, len(self.job_titles))
@@ -176,7 +249,10 @@ class ResumeJobMatcher:
             )
         return matches
 
+
+# ---------------------------------------------------------------------------
 # STAGE 6: SKILL GAP ANALYSIS
+# ---------------------------------------------------------------------------
 
 @dataclass
 class SkillGapReport:
@@ -185,14 +261,32 @@ class SkillGapReport:
     missing_skills: List[str]
     readiness_score: float  # 0-100, weighted by skill importance
 
+
 def skill_gap_report(resume_skills: List[str], job_match: JobMatch) -> SkillGapReport:
     resume_set = set(resume_skills)
     required = job_match.required_skills
 
+    if not required:
+        # A job with no required skills is a data problem, not a "0% ready"
+        # candidate — surface it explicitly instead of silently defaulting.
+        import warnings
+        warnings.warn(
+            f"Job '{job_match.title}' has no required skills defined in "
+            f"the dataset. Readiness score cannot be meaningfully computed "
+            f"and will be reported as 0.0%. Check job_data.py.",
+            stacklevel=2,
+        )
+        return SkillGapReport(
+            job_title=job_match.title,
+            matched_skills=[],
+            missing_skills=[],
+            readiness_score=0.0,
+        )
+
     matched = [s for s in required if s in resume_set]
     missing = [s for s in required if s not in resume_set]
 
-    total_weight = sum(required.values()) or 1
+    total_weight = sum(required.values())
     matched_weight = sum(w for s, w in required.items() if s in resume_set)
     readiness = round((matched_weight / total_weight) * 100, 1)
 
