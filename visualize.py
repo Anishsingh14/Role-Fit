@@ -1,16 +1,7 @@
 """
-visualize.py
-------------
-Part of Role-Fit — Smart Resume-to-Job Matching & Skill Gap Analysis.
-
-Generates all charts for the project as PNG files (no frontend needed).
+Generates all charts as PNG files (no frontend needed).
 Every function saves an image into the given output directory and returns
 the file path.
-
-Design system: a single cohesive palette, typography, and set of layout
-conventions (rounded bars, soft gridlines, consistent title/subtitle/
-footer treatment) are shared across all six charts so they read as one
-polished report rather than six independently-styled plots.
 """
 
 from __future__ import annotations
@@ -28,10 +19,7 @@ from sklearn.decomposition import PCA
 from matcher_core import JobMatch, SkillGapReport
 from job_data import MASTER_SKILLS
 
-# ---------------------------------------------------------------------------
 # DESIGN SYSTEM
-# ---------------------------------------------------------------------------
-
 # Color palette — one primary (brand), one success, one warning/gap, and a
 # neutral scale. Chosen for good contrast at both screen and print size.
 PRIMARY = "#4F46E5"       # indigo — brand / "your resume" / neutral data
@@ -122,9 +110,7 @@ def _save(fig, out_dir: str, filename: str) -> str:
     return path
 
 
-# ---------------------------------------------------------------------------
 # CHART 1: TOP JOB MATCHES
-# ---------------------------------------------------------------------------
 
 def plot_top_matches_bar(matches: List[JobMatch], out_dir: str) -> str:
     """Bar chart of cosine similarity scores for top-K matched jobs."""
@@ -164,9 +150,8 @@ def plot_top_matches_bar(matches: List[JobMatch], out_dir: str) -> str:
     return _save(fig, out_dir, "01_top_job_matches.png")
 
 
-# ---------------------------------------------------------------------------
 # CHART 2: SKILL MATCH VS GAP
-# ---------------------------------------------------------------------------
+
 
 def plot_skill_gap_bar(report: SkillGapReport, out_dir: str) -> str:
     """Horizontal 'chip' list: matched vs missing skills for the top job."""
@@ -204,9 +189,7 @@ def plot_skill_gap_bar(report: SkillGapReport, out_dir: str) -> str:
     return _save(fig, out_dir, "02_skill_gap_bar.png")
 
 
-# ---------------------------------------------------------------------------
 # CHART 3: READINESS DONUT
-# ---------------------------------------------------------------------------
 
 def _readiness_color(score: float) -> str:
     if score >= 75:
@@ -241,9 +224,7 @@ def plot_readiness_donut(report: SkillGapReport, out_dir: str) -> str:
     return _save(fig, out_dir, "03_readiness_donut.png")
 
 
-# ---------------------------------------------------------------------------
 # CHART 4: SKILL COVERAGE RADAR
-# ---------------------------------------------------------------------------
 
 def plot_radar_chart(resume_skills: List[str], match: JobMatch, out_dir: str) -> str:
     """Radar chart comparing resume skill coverage vs job requirement for
@@ -287,9 +268,8 @@ def plot_radar_chart(resume_skills: List[str], match: JobMatch, out_dir: str) ->
     return _save(fig, out_dir, "04_skill_radar.png")
 
 
-# ---------------------------------------------------------------------------
 # CHART 5: HIGHEST-IMPACT MISSING SKILLS
-# ---------------------------------------------------------------------------
+
 
 def plot_common_missing_skills(common_missing: List[Tuple[str, int]], out_dir: str) -> str:
     """Bar chart: skills most frequently missing across ALL top-K matched
@@ -336,9 +316,7 @@ def plot_common_missing_skills(common_missing: List[Tuple[str, int]], out_dir: s
     return _save(fig, out_dir, "05_highest_impact_missing_skills.png")
 
 
-# ---------------------------------------------------------------------------
 # CHART 6: 2D JOB-SPACE PROJECTION (PCA)
-# ---------------------------------------------------------------------------
 
 def plot_pca_projection(resume_vector: np.ndarray, matcher, out_dir: str, matches: List[JobMatch] | None = None) -> str:
     """2D PCA projection of all job vectors + the resume vector, to visually
