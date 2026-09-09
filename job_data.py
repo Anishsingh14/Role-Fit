@@ -1,9 +1,5 @@
 """
-job_data.py
------------
-Part of Role-Fit — Smart Resume-to-Job Matching & Skill Gap Analysis.
-
-This module IS the "database" for the project.
+The "database/dataset" for the project.
 
 Instead of downloading an external dataset, we programmatically generate a
 clean, labeled dataset of job roles with their required skills and skill
@@ -19,9 +15,8 @@ with a loader that returns the same structure.
 from __future__ import annotations
 from typing import Dict, List
 
-# ---------------------------------------------------------------------------
-# 1. MASTER SKILLS TAXONOMY
-# ---------------------------------------------------------------------------
+# MASTER SKILLS TAXONOMY
+
 # A curated list of tech + soft skills, each mapped to its accepted synonyms.
 # The extractor searches resume text for the canonical name OR any synonym,
 # and always records the canonical name. This solves the "Python" vs
@@ -88,9 +83,8 @@ SKILL_SYNONYMS: Dict[str, List[str]] = {
 MASTER_SKILLS: List[str] = sorted(SKILL_SYNONYMS.keys())
 
 
-# ---------------------------------------------------------------------------
-# 2. SYNTHETIC JOB POSTINGS DATASET (the "training data" for K-NN)
-# ---------------------------------------------------------------------------
+# SYNTHETIC JOB POSTINGS DATASET (the "training data" for K-NN)
+
 # Each job has:
 #   - title
 #   - required_skills: dict of {skill: importance_weight (1-3)}
