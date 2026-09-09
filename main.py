@@ -1,18 +1,8 @@
-#!/usr/bin/env python3
 """
-main.py
--------
-Role-Fit — Smart Resume-to-Job Matching & Skill Gap Analysis
-Entry point script. Run this directly from any terminal or IDE.
-
 Interactive usage (recommended for most users):
     python main.py
     -> You'll be prompted: "Provide the path of your Resume File : "
        Type or paste the full path to your .pdf or .docx resume and press Enter.
-
-Command-line usage (for scripting/automation):
-    python main.py path/to/resume.pdf
-    python main.py path/to/resume.docx --k 7 --out results
 
 If a path is passed on the command line, it is used directly and no prompt
 is shown. If no path is passed, the script asks for one interactively.
@@ -106,7 +96,7 @@ def main():
     print(f"Top-K matches: {args.k}")
     print(f"Output folder: {out_dir}/")
 
-    # --- Stage 1: Parse resume file -----------------------------------
+    # RESUME PARSING
     try:
         print_section("STAGE 1: Parsing resume file")
         raw_text = parse_resume_file(resume_path)
@@ -115,7 +105,7 @@ def main():
         print(f"\n[ERROR] Failed to parse resume: {e}")
         sys.exit(1)
 
-    # --- Stage 2: Extract skills ----------------------------------------
+    # SKILLS EXTRACTION
     try:
         print_section("STAGE 2: Extracting skills")
         resume_skills = extract_skills(raw_text)
@@ -130,7 +120,7 @@ def main():
         print(f"\n[ERROR] Failed to extract skills from resume text: {e}")
         sys.exit(1)
 
-    # --- Stage 3 & 4: Vectorize -------------------------------------------
+    # VECTORIZATION
     try:
         print_section("STAGE 3: Vectorizing resume & job dataset")
         resume_vector = vectorize_resume(resume_skills)
@@ -141,7 +131,7 @@ def main():
         print(f"\n[ERROR] Failed to vectorize resume or load job dataset: {e}")
         sys.exit(1)
 
-    # --- Stage 5: K-NN Matching -------------------------------------------
+    # K-NN MATCHING
     try:
         print_section("STAGE 4: Running K-NN job matching")
         matches = matcher.find_top_matches(resume_vector, k=args.k)
@@ -156,7 +146,7 @@ def main():
         print(f"\n[ERROR] K-NN job matching failed: {e}")
         sys.exit(1)
 
-    # --- Stage 6: Skill Gap Analysis (for top match) -----------------------
+    # SKILL GAP ANALYSIS (FOR TOP MATCH) 
     try:
         print_section("STAGE 5: Skill gap analysis (top match)")
         top_report = skill_gap_report(resume_skills, matches[0])
@@ -176,7 +166,7 @@ def main():
         print(f"\n[ERROR] Skill gap analysis failed: {e}")
         sys.exit(1)
 
-    # --- Stage 7: Visualizations -------------------------------------------
+    # VISUALIZATION PART
     try:
         print_section("STAGE 6: Generating visualizations")
         chart_paths = generate_all_visuals(
@@ -188,7 +178,7 @@ def main():
         print(f"\n[ERROR] Chart generation failed: {e}")
         sys.exit(1)
 
-    # --- Save JSON report ---------------------------------------------------
+    # SAVE YOUR REPORT
     try:
         report = {
             "resume_file": resume_path,
@@ -209,7 +199,6 @@ def main():
         sys.exit(1)
 
     print_header("DONE")
-
 
 if __name__ == "__main__":
     main()
