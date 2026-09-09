@@ -1,9 +1,5 @@
 """
-matcher_core.py
-----------------
-Core ML pipeline for Role-Fit — Smart Resume-to-Job Matching & Skill Gap
-Analysis. Kept separate from main.py so it can be unit-tested / imported
-independently.
+Core ML pipeline for Role-Fit
 
 Pipeline stages:
     1. parse_resume_file()      -> raw text from .pdf / .docx
@@ -29,9 +25,7 @@ from sklearn.neighbors import NearestNeighbors
 from job_data import MASTER_SKILLS, SKILL_SYNONYMS, get_job_dataset
 
 
-# ---------------------------------------------------------------------------
-# STAGE 1: FILE PARSING
-# ---------------------------------------------------------------------------
+# FILE PARSING
 
 def parse_resume_file(file_path: str) -> str:
     """Extract raw text from a .pdf or .docx resume file."""
@@ -86,9 +80,7 @@ def _parse_docx(file_path: str) -> str:
     return text
 
 
-# ---------------------------------------------------------------------------
-# STAGE 2: SKILL EXTRACTION
-# ---------------------------------------------------------------------------
+# SKILLS EXTRACTION
 
 def extract_skills(text: str, fuzzy: bool = True, fuzzy_cutoff: float = 0.82) -> List[str]:
     """
@@ -164,9 +156,7 @@ def extract_skills(text: str, fuzzy: bool = True, fuzzy_cutoff: float = 0.82) ->
     return sorted(found)
 
 
-# ---------------------------------------------------------------------------
-# STAGE 3 & 4: VECTORIZATION
-# ---------------------------------------------------------------------------
+# VECTORIZATION
 
 def build_job_vectors() -> Tuple[np.ndarray, List[str], List[dict]]:
     """
@@ -198,9 +188,7 @@ def vectorize_resume(resume_skills: List[str]) -> np.ndarray:
     return vector
 
 
-# ---------------------------------------------------------------------------
-# STAGE 5: K-NN MATCHER
-# ---------------------------------------------------------------------------
+# K-NN MATCHER
 
 @dataclass
 class JobMatch:
@@ -250,9 +238,7 @@ class ResumeJobMatcher:
         return matches
 
 
-# ---------------------------------------------------------------------------
-# STAGE 6: SKILL GAP ANALYSIS
-# ---------------------------------------------------------------------------
+# SKILL GAP ANALYSIS
 
 @dataclass
 class SkillGapReport:
