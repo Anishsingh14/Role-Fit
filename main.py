@@ -1,12 +1,4 @@
-"""
-Interactive usage (recommended for most users):
-    python main.py
-    -> You'll be prompted: "Provide the path of your Resume File : "
-       Type or paste the full path to your .pdf or .docx resume and press Enter.
 
-If a path is passed on the command line, it is used directly and no prompt
-is shown. If no path is passed, the script asks for one interactively.
-"""
 
 import argparse
 import json
