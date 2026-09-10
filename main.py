@@ -178,7 +178,7 @@ def main():
         print(f"\n[ERROR] Chart generation failed: {e}")
         sys.exit(1)
 
-    # SAVE YOUR REPORT
+    # SAVE YOUR ANALYZED REPORT
     try:
         report = {
             "resume_file": resume_path,
